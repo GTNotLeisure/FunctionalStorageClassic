@@ -74,12 +74,7 @@ public class UpgradeSettings {
         if (value == null) {
             tag(stack).removeTag(key);
         } else {
-            ItemStack stored = value;
-            if (SPEED_AUGMENTS_KEY.equals(key) && value.stackSize > 6) {
-                stored = value.copy();
-                stored.stackSize = 6;
-            }
-            tag(stack).setTag(key, stored.writeToNBT(new NBTTagCompound()));
+            tag(stack).setTag(key, value.writeToNBT(new NBTTagCompound()));
         }
     }
 

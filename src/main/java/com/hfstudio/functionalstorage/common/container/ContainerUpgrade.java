@@ -16,6 +16,7 @@ import com.hfstudio.functionalstorage.common.tile.base.ControllableDrawerTile;
 import com.hfstudio.functionalstorage.config.FunctionalStorageConfig;
 import com.hfstudio.functionalstorage.misc.GuiHandler;
 import com.hfstudio.functionalstorage.misc.RegistrationHandler;
+import com.hfstudio.functionalstorage.util.ItemUtil;
 
 import lombok.Getter;
 
@@ -35,14 +36,11 @@ public class ContainerUpgrade extends Container implements GhostFilterMenu {
         this.upgrade = (AutomationUpgradeItem) upgradeStack.getItem();
         this.attachments = new InventoryBasic("Upgrade attachments", false, 3);
         attachments.setInventorySlotContents(0, UpgradeSettings.getStack(upgradeStack, UpgradeSettings.TOOL_KEY));
-        attachments.setInventorySlotContents(
-            1,
-            loadAttachment(UpgradeSettings.SPEED_AUGMENTS_KEY, FunctionalStorageConfig.UPGRADES.maxSpeedAugments));
+        attachments
+            .setInventorySlotContents(1, UpgradeSettings.getStack(upgradeStack, UpgradeSettings.SPEED_AUGMENTS_KEY));
         attachments.setInventorySlotContents(
             2,
-            loadAttachment(
-                UpgradeSettings.EFFICIENCY_AUGMENTS_KEY,
-                FunctionalStorageConfig.UPGRADES.maxEfficiencyAugments));
+            UpgradeSettings.getStack(upgradeStack, UpgradeSettings.EFFICIENCY_AUGMENTS_KEY));
         addSlotToContainer(new AttachmentSlot(0, 80, 80));
         addSlotToContainer(new AttachmentSlot(1, 152, 80));
         addSlotToContainer(new AttachmentSlot(2, 152, 62));
@@ -151,17 +149,52 @@ public class ContainerUpgrade extends Container implements GhostFilterMenu {
     }
 
     @Override
+    public ItemStack slotClick(int slotId, int button, int mode, EntityPlayer player) {
+        if (mode == 2 && slotId >= 0 && slotId < attachments.getSizeInventory() && button >= 0 && button < 9) {
+            Slot slot = inventorySlots.get(slotId);
+            ItemStack hotbarStack = player.inventory.getStackInSlot(button);
+            if (hotbarStack != null && slot.isItemValid(hotbarStack)
+                && hotbarStack.stackSize > Math.min(slot.getSlotStackLimit(), hotbarStack.getMaxStackSize())) {
+                return null;
+            }
+        }
+        return super.slotClick(slotId, button, mode, player);
+    }
+
+    @Override
     public ItemStack transferStackInSlot(EntityPlayer player, int index) {
         if (index < 0 || index >= inventorySlots.size()) return null;
         Slot slot = inventorySlots.get(index);
         if (!slot.getHasStack()) return null;
         ItemStack stack = slot.getStack();
         ItemStack original = stack.copy();
-        if (!(index < 3 ? mergeItemStack(stack, 3, inventorySlots.size(), true) : mergeItemStack(stack, 0, 3, false)))
-            return null;
+        if (!(index < attachments.getSizeInventory()
+            ? mergeItemStack(stack, attachments.getSizeInventory(), inventorySlots.size(), true)
+            : insertAttachment(stack))) return null;
         if (stack.stackSize == 0) slot.putStack(null);
         else slot.onSlotChanged();
         return original;
+    }
+
+    private boolean insertAttachment(ItemStack stack) {
+        int originalSize = stack.stackSize;
+        for (int index = 0; index < attachments.getSizeInventory() && stack.stackSize > 0; index++) {
+            Slot slot = inventorySlots.get(index);
+            if (!slot.isItemValid(stack)) continue;
+            ItemStack installed = slot.getStack();
+            if (installed != null && !ItemUtil.areItemStacksEqual(installed, stack)) continue;
+            int limit = Math.min(slot.getSlotStackLimit(), stack.getMaxStackSize());
+            int inserted = Math.min(stack.stackSize, limit - (installed == null ? 0 : installed.stackSize));
+            if (inserted <= 0) continue;
+            if (installed == null) {
+                slot.putStack(stack.splitStack(inserted));
+            } else {
+                installed.stackSize += inserted;
+                stack.stackSize -= inserted;
+                slot.onSlotChanged();
+            }
+        }
+        return stack.stackSize < originalSize;
     }
 
     public class AttachmentSlot extends Slot {
@@ -172,6 +205,8 @@ public class ContainerUpgrade extends Container implements GhostFilterMenu {
 
         @Override
         public boolean isItemValid(ItemStack stack) {
+            ItemStack installed = getStack();
+            if (stack == null || installed != null && installed.stackSize > getSlotStackLimit()) return false;
             return getSlotIndex() == 0 ? upgrade instanceof BreakerUpgradeItem && stack.getMaxStackSize() == 1
                 : getSlotIndex() == 1 ? stack.getItem() == RegistrationHandler.speedUpgradeAugment
                     : stack.getItem() == RegistrationHandler.efficiencyUpgradeAugment;
@@ -184,7 +219,9 @@ public class ContainerUpgrade extends Container implements GhostFilterMenu {
                     ? UpgradeSettings.getAugmentLimit(
                         UpgradeSettings.SPEED_AUGMENTS_KEY,
                         FunctionalStorageConfig.UPGRADES.maxSpeedAugments)
-                    : getConfiguredAugmentLimit(FunctionalStorageConfig.UPGRADES.maxEfficiencyAugments);
+                    : UpgradeSettings.getAugmentLimit(
+                        UpgradeSettings.EFFICIENCY_AUGMENTS_KEY,
+                        FunctionalStorageConfig.UPGRADES.maxEfficiencyAugments);
         }
 
         @Override
@@ -200,21 +237,5 @@ public class ContainerUpgrade extends Container implements GhostFilterMenu {
                 tile.markOptionsDirty();
             }
         }
-    }
-
-    private ItemStack loadAttachment(String key, int maximum) {
-        ItemStack stack = UpgradeSettings.getStack(upgradeStack, key);
-        if (stack == null) return null;
-        int originalSize = stack.stackSize;
-        stack.stackSize = Math.min(UpgradeSettings.getAugmentLimit(key, maximum), Math.max(0, originalSize));
-        if (stack.stackSize == 0) stack = null;
-        if (!tile.getWorldObj().isRemote && originalSize != (stack == null ? 0 : stack.stackSize)) {
-            UpgradeSettings.setStack(upgradeStack, key, stack);
-        }
-        return stack;
-    }
-
-    private int getConfiguredAugmentLimit(int configuredLimit) {
-        return Math.min(64, Math.max(1, configuredLimit));
     }
 }
