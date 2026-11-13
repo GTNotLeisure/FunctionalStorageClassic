@@ -1,5 +1,7 @@
 package com.hfstudio.functionalstorage.misc;
 
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import net.minecraft.init.Blocks;
@@ -24,6 +26,7 @@ import com.hfstudio.functionalstorage.common.item.upgrade.ResourceGenerationUpgr
 import com.hfstudio.functionalstorage.common.recipe.AdaptiveDrawerRecipe;
 import com.hfstudio.functionalstorage.common.recipe.DrawerCleansingRecipe;
 import com.hfstudio.functionalstorage.common.recipe.DrawerCraftingRecipe;
+import com.hfstudio.functionalstorage.common.recipe.FluidGenerationRecipe;
 import com.hfstudio.functionalstorage.common.recipe.FramedDrawerStyleRecipe;
 import com.hfstudio.functionalstorage.common.recipe.UpgradeConversionRecipe;
 import com.hfstudio.functionalstorage.common.storage.DrawerLayout;
@@ -130,17 +133,13 @@ public class FunctionalStorageRecipes {
     }
 
     private static void registerEssentiaRecipes() {
+        ItemStack jar = GameRegistry.findItemStack(Mods.Thaumcraft.modid, "blockJar", 1);
+        if (jar == null) return;
         for (var block : RegistrationHandler.essentiaDrawers) {
             int count = block.getFaceLayout()
                 .getSlotCount();
             GameRegistry.addRecipe(
-                new DrawerCraftingRecipe(
-                    new ItemStack(block, count),
-                    false,
-                    drawerRecipe(
-                        count,
-                        Item.itemRegistry.getObject(Mods.Thaumcraft.modid + ":BlockJarFilledItem"),
-                        "plankWood")));
+                new DrawerCraftingRecipe(new ItemStack(block, count), false, drawerRecipe(count, jar, "plankWood")));
         }
     }
 
@@ -655,7 +654,7 @@ public class FunctionalStorageRecipes {
             'I',
             Blocks.stone,
             'R',
-            Items.lava_bucket);
+            oreOr("bucketLava", Items.lava_bucket));
         registerOreRecipe(
             FSItemList.ObsidianUpgrade.get(),
             "DWD",
@@ -667,7 +666,7 @@ public class FunctionalStorageRecipes {
             FSItemList.DrippingUpgrade.get(),
             'W',
             FSItemList.WaterGenerationUpgrade1.get());
-        registerGenerationTier(RegistrationHandler.waterGenerationUpgrades, new ItemStack(Items.water_bucket));
+        registerGenerationTier(RegistrationHandler.waterGenerationUpgrades, oreOr("bucketWater", Items.water_bucket));
         registerGenerationTier(RegistrationHandler.stoneGenerationUpgrades, new ItemStack(Blocks.cobblestone));
         for (List<ResourceGenerationUpgradeItem> upgrades : RegistrationHandler.getItemGenerationUpgradeGroups()
             .values()) {
@@ -680,14 +679,14 @@ public class FunctionalStorageRecipes {
         for (List<ResourceGenerationUpgradeItem> upgrades : RegistrationHandler.getFluidGenerationUpgradeGroups()
             .values()) {
             ResourceGenerationUpgradeItem first = upgrades.get(0);
-            registerResourceGenerationTier(
+            registerFluidGenerationTier(
                 upgrades,
-                findFluidContainer(first.getGeneratedFluid()),
+                first.getGeneratedFluid(),
                 first == RegistrationHandler.drippingUpgrade);
         }
     }
 
-    private static void registerGenerationTier(List<GenerationUpgradeItem> upgrades, ItemStack resource) {
+    private static void registerGenerationTier(List<GenerationUpgradeItem> upgrades, Object resource) {
         ItemStack core = FSItemList.BlankUpgrade.get();
         for (GenerationUpgradeItem upgrade : upgrades) {
             registerOreRecipe(new ItemStack(upgrade), "RRR", "RCR", "RRR", 'R', resource, 'C', core);
@@ -706,16 +705,37 @@ public class FunctionalStorageRecipes {
         }
     }
 
-    private static ItemStack findFluidContainer(FluidStack fluid) {
-        if (fluid == null) return null;
-        for (FluidContainerData container : FluidContainerRegistry.getRegisteredFluidContainerData()) {
-            if (container.fluid != null && container.fluid.isFluidEqual(fluid)
-                && container.filledContainer != null
-                && container.filledContainer.getItem() != null) {
-                return container.filledContainer.copy();
-            }
+    private static void registerFluidGenerationTier(List<ResourceGenerationUpgradeItem> upgrades, FluidStack fluid,
+        boolean hasBaseRecipe) {
+        if (fluid == null) return;
+        FluidStack contents = fluid.copy();
+        contents.amount = FluidContainerRegistry.BUCKET_VOLUME;
+        List<ItemStack> containers = findFluidContainers(contents);
+        if (containers.isEmpty()) return;
+        ItemStack core = hasBaseRecipe ? new ItemStack(upgrades.get(0)) : FSItemList.BlankUpgrade.get();
+        for (int tier = hasBaseRecipe ? 1 : 0; tier < upgrades.size(); tier++) {
+            ItemStack output = new ItemStack(upgrades.get(tier));
+            GameRegistry.addRecipe(new FluidGenerationRecipe(output, core, contents, containers));
+            core = output;
         }
-        return null;
+    }
+
+    private static List<ItemStack> findFluidContainers(FluidStack fluid) {
+        return Arrays.stream(FluidContainerRegistry.getRegisteredFluidContainerData())
+            .filter(
+                container -> container.fluid != null && container.fluid.isFluidEqual(fluid)
+                    && container.fluid.amount == fluid.amount
+                    && container.filledContainer != null
+                    && container.filledContainer.getItem() != null)
+            .filter(container -> FluidGenerationRecipe.matchesFluid(container.filledContainer, fluid))
+            .sorted(
+                Comparator
+                    .comparing(
+                        (FluidContainerData container) -> Item.itemRegistry
+                            .getNameForObject(container.filledContainer.getItem()))
+                    .thenComparingInt(container -> container.filledContainer.getItemDamage()))
+            .map(container -> container.filledContainer.copy())
+            .toList();
     }
 
     private static void registerToolRecipes() {
