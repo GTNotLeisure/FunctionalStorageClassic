@@ -6,6 +6,7 @@ pluginManagement {
             url = uri("https://nexus.gtnewhorizons.com/repository/public/")
             mavenContent {
                 includeGroup("com.gtnewhorizons")
+                includeGroup("org.jetbrains.kotlin")
                 includeGroupByRegex("com\\.gtnewhorizons\\..+")
             }
         }

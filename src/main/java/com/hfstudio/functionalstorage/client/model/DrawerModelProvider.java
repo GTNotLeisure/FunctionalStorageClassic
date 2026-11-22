@@ -28,6 +28,7 @@ import com.gtnewhorizon.gtnhlib.client.model.loading.ModelRegistry;
 import com.gtnewhorizon.gtnhlib.client.model.loading.ResourceLoc.ModelLoc;
 import com.gtnewhorizon.gtnhlib.client.model.state.StateDeserializer;
 import com.gtnewhorizon.gtnhlib.client.model.state.StateModelMap;
+import com.gtnewhorizon.gtnhlib.client.model.unbaked.JSONModel;
 import com.gtnewhorizon.gtnhlib.client.model.unbaked.MonopartDough;
 import com.gtnewhorizon.gtnhlib.client.model.unbaked.UnbakedModel;
 import com.hfstudio.functionalstorage.FunctionalStorage;
@@ -110,7 +111,7 @@ public class DrawerModelProvider implements IBlockModelProvider, IResourceManage
             rotation.x(),
             rotation.y(),
             rotation.uvLock());
-        BakedModel baked = new FaceRotatedModel(ModelRegistry.getJSONModel(variant.model())).bake(variant);
+        BakedModel baked = new JSONModel(ModelRegistry.getJSONModel(variant.model())).bake(variant);
         adaptiveModels.put(key, baked);
         return baked;
     }
@@ -164,7 +165,7 @@ public class DrawerModelProvider implements IBlockModelProvider, IResourceManage
         ObjectArrayList<Weighted<BakedModel>> variants = new ObjectArrayList<>();
         for (var weighted : single.variants()) {
             var variant = weighted.thing();
-            BakedModel baked = new FaceRotatedModel(ModelRegistry.getJSONModel(variant.model())).bake(variant);
+            BakedModel baked = new JSONModel(ModelRegistry.getJSONModel(variant.model())).bake(variant);
             variants.add(new Weighted<>(baked, weighted.weight()));
         }
         return variants.size() == 1 ? variants.get(0)
