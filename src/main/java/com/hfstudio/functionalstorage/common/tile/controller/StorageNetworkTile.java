@@ -72,6 +72,15 @@ public abstract class StorageNetworkTile extends ControllableDrawerTile
             refreshNetwork();
         }
         super.updateEntity();
+        // A Thaumcraft sink takes the last hop from an adjacent tube. This only runs
+        // while this storage has stronger suction; an extracting tube has stronger
+        // suction and calls takeEssentia instead.
+        if (aspects != null) {
+            if (aspectPort == null) {
+                getEssentiaTransport();
+            }
+            aspectPort.tick();
+        }
     }
 
     public void invalidateNetwork() {
@@ -163,7 +172,7 @@ public abstract class StorageNetworkTile extends ControllableDrawerTile
     @Optional.Method(modid = "Thaumcraft")
     public IEssentiaTransport getEssentiaTransport() {
         refreshNetwork();
-        if (aspectPort == null) aspectPort = new DrawerEssentiaTransport(this, this::getAspectHandler);
+        if (aspectPort == null) aspectPort = new DrawerEssentiaTransport(this, this::getAspectHandler, true);
         return aspectPort;
     }
 
