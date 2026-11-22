@@ -25,20 +25,20 @@ import com.hfstudio.functionalstorage.config.FunctionalStorageConfig;
 import cpw.mods.fml.common.Optional;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
-import thaumcraft.api.aspects.IAspectContainer;
+import thaumcraft.api.aspects.IAspectSource;
 import thaumcraft.api.aspects.IEssentiaTransport;
 import thaumicenergistics.api.storage.IAspectStorage;
 
 /** Adapts long-capacity essentia storage to Thaumcraft containers and tubes. */
 @Optional.InterfaceList({
-    @Optional.Interface(iface = "thaumcraft.api.aspects.IAspectContainer", modid = "Thaumcraft", striprefs = true),
+    @Optional.Interface(iface = "thaumcraft.api.aspects.IAspectSource", modid = "Thaumcraft", striprefs = true),
     @Optional.Interface(iface = "thaumcraft.api.aspects.IEssentiaTransport", modid = "Thaumcraft", striprefs = true),
     @Optional.Interface(
         iface = "thaumicenergistics.api.storage.IAspectStorage",
         modid = "thaumicenergistics",
         striprefs = true) })
 public class EssentiaDrawerTile extends ControllableDrawerTile
-    implements IAspectContainer, IEssentiaTransport, IAspectStorage {
+    implements IAspectSource, IEssentiaTransport, IAspectStorage {
 
     private static final String KEY_ASPECTS = "Aspects";
 

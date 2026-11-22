@@ -13,13 +13,13 @@ import com.hfstudio.functionalstorage.api.storage.TransferResult;
 import cpw.mods.fml.common.Optional;
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
-import thaumcraft.api.aspects.IAspectContainer;
+import thaumcraft.api.aspects.IAspectSource;
 import thaumcraft.api.aspects.IEssentiaTransport;
 
 @Optional.InterfaceList({
-    @Optional.Interface(iface = "thaumcraft.api.aspects.IAspectContainer", modid = "Thaumcraft", striprefs = true),
+    @Optional.Interface(iface = "thaumcraft.api.aspects.IAspectSource", modid = "Thaumcraft", striprefs = true),
     @Optional.Interface(iface = "thaumcraft.api.aspects.IEssentiaTransport", modid = "Thaumcraft", striprefs = true) })
-public interface DrawerTransportAccess extends IAspectContainer, IEssentiaTransport {
+public interface DrawerTransportAccess extends IAspectSource, IEssentiaTransport {
 
     @Optional.Method(modid = "Thaumcraft")
     IEssentiaTransport getEssentiaTransport();

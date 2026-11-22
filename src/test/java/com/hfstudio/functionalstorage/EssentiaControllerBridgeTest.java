@@ -20,11 +20,14 @@ import com.hfstudio.functionalstorage.common.integration.thaumcraft.DrawerEssent
 import com.hfstudio.functionalstorage.common.integration.thaumcraft.DrawerTransportAccess;
 import com.hfstudio.functionalstorage.common.inventory.AggregatedStorage;
 import com.hfstudio.functionalstorage.common.inventory.base.BigAspectHandler;
+import com.hfstudio.functionalstorage.common.tile.EssentiaDrawerTile;
+import com.hfstudio.functionalstorage.common.tile.controller.StorageNetworkTile;
 import com.hfstudio.functionalstorage.support.AspectBootstrap;
 
 import thaumcraft.api.aspects.Aspect;
 import thaumcraft.api.aspects.AspectList;
 import thaumcraft.api.aspects.IAspectContainer;
+import thaumcraft.api.aspects.IAspectSource;
 import thaumcraft.api.aspects.IEssentiaTransport;
 
 /** A controller exposes a multi-aspect container with an untyped input port. */
@@ -83,6 +86,9 @@ public class EssentiaControllerBridgeTest {
 
         assertTrue(access instanceof IAspectContainer);
         assertTrue(access instanceof IEssentiaTransport);
+        assertTrue(access instanceof IAspectSource);
+        assertTrue(IAspectSource.class.isAssignableFrom(EssentiaDrawerTile.class));
+        assertTrue(IAspectSource.class.isAssignableFrom(StorageNetworkTile.class));
         IAspectContainer container = (IAspectContainer) access;
         assertTrue(container.doesContainerAccept(aspect));
         assertEquals(0, container.addToContainer(aspect, 7));
@@ -98,6 +104,8 @@ public class EssentiaControllerBridgeTest {
         assertEquals(7, container.containerContains(aspect), "a jar must ignore wholesale aspect replacement");
         assertTrue(container.takeFromContainer(aspect, 7));
         assertEquals(0, container.containerContains(aspect));
+        assertTrue(container.takeFromContainer(second, 3));
+        assertEquals(0, container.containerContains(second));
     }
 
     @Test
@@ -117,6 +125,30 @@ public class EssentiaControllerBridgeTest {
         assertEquals(aspect, drawer.getSuctionType(ForgeDirection.UP));
         assertNull(controller.getSuctionType(ForgeDirection.UP));
         assertTrue(controller.getSuctionAmount(ForgeDirection.UP) > 0);
+    }
+
+    @Test
+    @DisplayName("controller extraction updates the linked drawer and aggregate together")
+    void controllerExtractionSynchronizesDrawer() {
+        Aspect aspect = AspectBootstrap.firstAspect();
+        BigAspectHandler drawer = new BigAspectHandler(1);
+        drawer.insert(0, new BigAspectStack(aspect, 5L), StorageAction.EXECUTE);
+        AggregatedStorage.Aspects aggregate = aggregate(drawer);
+        DrawerTransportAccess controller = access(aggregate);
+
+        assertEquals(
+            5L,
+            aggregate.summary()
+                .getTotal(aspect));
+        assertTrue(controller.takeFromContainer(aspect, 2));
+        assertEquals(
+            3L,
+            aggregate.summary()
+                .getTotal(aspect));
+        assertEquals(
+            3L,
+            drawer.summary()
+                .getTotal(aspect));
     }
 
     private static AggregatedStorage.Aspects aggregate(BigAspectHandler child) {
