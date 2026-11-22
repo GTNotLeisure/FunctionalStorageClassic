@@ -1,7 +1,6 @@
 dependencies {
 
     api("com.github.GTNewHorizons:GTNHLib:0.11.58:dev")
-    implementation("com.github.GTNewHorizons:GTNHExtLib:1.0.6:dev")
 
     compileOnly("com.github.GTNewHorizons:NotEnoughItems:2.8.175-GTNH:dev")
     runtimeOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.8.175-GTNH:dev")
@@ -72,13 +71,6 @@ dependencies {
 }
 
 configurations.configureEach {
-    resolutionStrategy.dependencySubstitution {
-        substitute(module("com.github.GTNewHorizons:GTNHExtLib"))
-            .using(module("com.github.GTNewHorizons:GTNHExtLib:1.0.6"))
-            .withClassifier("dev")
-            .because("Use one GTNHExtLib development artifact for direct and transitive dependencies")
-    }
-
     resolutionStrategy {
         force "com.github.GTNewHorizons:TinkersConstruct:1.14.124-GTNH"
     }
