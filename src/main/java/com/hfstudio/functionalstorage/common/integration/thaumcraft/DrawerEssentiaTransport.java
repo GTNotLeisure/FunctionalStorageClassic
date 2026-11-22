@@ -19,10 +19,16 @@ public class DrawerEssentiaTransport implements IEssentiaTransport {
 
     private final TileEntity owner;
     private final Supplier<IBigAspectHandler> storage;
+    private final boolean untypedSuction;
 
     public DrawerEssentiaTransport(TileEntity owner, Supplier<IBigAspectHandler> storage) {
+        this(owner, storage, false);
+    }
+
+    public DrawerEssentiaTransport(TileEntity owner, Supplier<IBigAspectHandler> storage, boolean untypedSuction) {
         this.owner = owner;
         this.storage = storage;
+        this.untypedSuction = untypedSuction;
     }
 
     @Optional.Method(modid = "Thaumcraft")
@@ -78,6 +84,9 @@ public class DrawerEssentiaTransport implements IEssentiaTransport {
     @Override
     @Optional.Method(modid = "Thaumcraft")
     public Aspect getSuctionType(ForgeDirection side) {
+        if (untypedSuction) {
+            return null;
+        }
         return storage.get()
             .summary()
             .getSuctionType();
@@ -113,11 +122,40 @@ public class DrawerEssentiaTransport implements IEssentiaTransport {
     @Override
     @Optional.Method(modid = "Thaumcraft")
     public Aspect getEssentiaType(ForgeDirection side) {
-        for (Aspect aspect : storage.get()
-            .summary()
+        IBigAspectHandler handler = storage.get();
+        if (handler == null) {
+            return null;
+        }
+        Aspect requested = requestedAspect(handler, side);
+        if (requested != null) {
+            return requested;
+        }
+        Aspect[] aspects = handler.summary()
             .getTotals()
-            .keySet()) {
-            return aspect;
+            .keySet()
+            .toArray(new Aspect[0]);
+        if (aspects.length == 0) {
+            return null;
+        }
+        World world = owner == null ? null : owner.getWorldObj();
+        return aspects[world == null ? 0 : world.rand.nextInt(aspects.length)];
+    }
+
+    @Optional.Method(modid = "Thaumcraft")
+    private Aspect requestedAspect(IBigAspectHandler handler, ForgeDirection side) {
+        World world = owner == null ? null : owner.getWorldObj();
+        if (world == null || side == null || side == ForgeDirection.UNKNOWN) {
+            return null;
+        }
+        TileEntity neighbor = world
+            .getTileEntity(owner.xCoord + side.offsetX, owner.yCoord + side.offsetY, owner.zCoord + side.offsetZ);
+        if (!(neighbor instanceof IEssentiaTransport transport)) {
+            return null;
+        }
+        Aspect requested = transport.getSuctionType(side.getOpposite());
+        if (requested != null && handler.summary()
+            .getTotal(requested) > 0L) {
+            return requested;
         }
         return null;
     }
