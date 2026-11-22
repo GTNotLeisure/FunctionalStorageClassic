@@ -72,6 +72,13 @@ dependencies {
 }
 
 configurations.configureEach {
+    resolutionStrategy.dependencySubstitution {
+        substitute(module("com.github.GTNewHorizons:GTNHExtLib"))
+            .using(module("com.github.GTNewHorizons:GTNHExtLib:1.0.6"))
+            .withClassifier("dev")
+            .because("Use one GTNHExtLib development artifact for direct and transitive dependencies")
+    }
+
     resolutionStrategy {
         force "com.github.GTNewHorizons:TinkersConstruct:1.14.124-GTNH"
     }
