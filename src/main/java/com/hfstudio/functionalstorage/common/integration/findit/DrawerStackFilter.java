@@ -10,27 +10,20 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraftforge.fluids.FluidStack;
 
-import com.hfstudio.functionalstorage.api.storage.BigAspectStack;
 import com.hfstudio.functionalstorage.api.storage.BigFluidStack;
-import com.hfstudio.functionalstorage.api.storage.IBigAspectHandler;
 import com.hfstudio.functionalstorage.api.storage.IBigFluidHandler;
 import com.hfstudio.functionalstorage.api.storage.IBigItemHandler;
 import com.hfstudio.functionalstorage.api.storage.ItemStorageView;
-import com.hfstudio.functionalstorage.common.integration.Mods;
 import com.hfstudio.functionalstorage.common.tile.base.ControllableDrawerTile;
-
-import cpw.mods.fml.common.Optional;
 
 public class DrawerStackFilter implements Predicate<DrawerStackFilter.Query> {
 
     private final IBigItemHandler items;
     private final IBigFluidHandler fluids;
-    private final IBigAspectHandler aspects;
 
-    private DrawerStackFilter(IBigItemHandler items, IBigFluidHandler fluids, IBigAspectHandler aspects) {
+    private DrawerStackFilter(IBigItemHandler items, IBigFluidHandler fluids) {
         this.items = items;
         this.fluids = fluids;
-        this.aspects = aspects;
     }
 
     @Nullable
@@ -38,11 +31,10 @@ public class DrawerStackFilter implements Predicate<DrawerStackFilter.Query> {
         Objects.requireNonNull(drawer, "drawer");
         IBigItemHandler items = drawer.getItemHandler();
         IBigFluidHandler fluids = drawer.getFluidHandler();
-        IBigAspectHandler aspects = Mods.Thaumcraft.isModLoaded() ? drawer.getAspectHandler() : null;
-        if (items == null && fluids == null && aspects == null) {
+        if (items == null && fluids == null) {
             return null;
         }
-        return new DrawerStackFilter(items, fluids, aspects);
+        return new DrawerStackFilter(items, fluids);
     }
 
     @Nullable
@@ -58,10 +50,7 @@ public class DrawerStackFilter implements Predicate<DrawerStackFilter.Query> {
         if (fluids != null && query.fluid() != null && holdsFluid(query.fluid())) {
             return true;
         }
-        if (aspects == null || !query.matchesAspects()) {
-            return false;
-        }
-        return Mods.Thaumcraft.isModLoaded() && holdsAspect();
+        return false;
     }
 
     private boolean holdsItem(@Nonnull ItemStack target) {
@@ -86,16 +75,5 @@ public class DrawerStackFilter implements Predicate<DrawerStackFilter.Query> {
         return false;
     }
 
-    @Optional.Method(modid = "Thaumcraft")
-    private boolean holdsAspect() {
-        for (int index = 0; index < aspects.getStorageCount(); index++) {
-            BigAspectStack snapshot = aspects.getSnapshot(index);
-            if (snapshot.getAmount() > 0L && snapshot.getAspect() != null) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public record Query(@Nullable ItemStack item, @Nullable FluidStack fluid, boolean matchesAspects) {}
+    public record Query(@Nullable ItemStack item, @Nullable FluidStack fluid) {}
 }

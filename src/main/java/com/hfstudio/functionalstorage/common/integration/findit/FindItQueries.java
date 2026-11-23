@@ -19,7 +19,7 @@ public class FindItQueries {
     public static DrawerStackFilter.Query of(@Nonnull FindItemRequest request) {
         ItemStack item = request.getStackToFind();
         FluidStack fluid = fluidOf(item);
-        return new DrawerStackFilter.Query(item, fluid, fluid == null);
+        return new DrawerStackFilter.Query(item, fluid);
     }
 
     @Nullable
