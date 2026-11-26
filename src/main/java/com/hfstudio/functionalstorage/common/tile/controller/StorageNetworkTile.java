@@ -75,11 +75,13 @@ public abstract class StorageNetworkTile extends ControllableDrawerTile
         // A Thaumcraft sink takes the last hop from an adjacent tube. This only runs
         // while this storage has stronger suction; an extracting tube has stronger
         // suction and calls takeEssentia instead.
-        if (aspects != null) {
+        if (aspects != null && networkAvailable()) {
             if (aspectPort == null) {
                 getEssentiaTransport();
             }
-            aspectPort.tick();
+            if (aspectPort != null) {
+                aspectPort.tick();
+            }
         }
     }
 

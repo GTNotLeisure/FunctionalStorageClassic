@@ -285,7 +285,7 @@ and installed upgrades have item previews in tooltips through GTNHLib's tooltip 
 ## 📥 Installation
 
 1. Install **Minecraft 1.7.10** with **Forge 10.13.4.1614**.
-2. Install **GTNHLib 0.11.48 or newer** — it is a hard requirement.
+2. Install **GTNHLib 0.11.58 or newer** — it is a hard requirement.
 3. Drop the Functional Storage Classic jar into your `mods` folder.
 4. Optional: install Applied Energistics 2, Waila, and Thaumcraft for their integrations.
 
@@ -297,7 +297,7 @@ and installed upgrades have item previews in tooltips through GTNHLib's tooltip 
 
 * **Minecraft**: `1.7.10`
 * **Forge**: `10.13.4.1614`
-* **GTNHLib**: `0.11.48` or newer, required
+* **GTNHLib**: `0.11.58` or newer, required
 
 Optional integrations activate automatically when the relevant mod is present.
 

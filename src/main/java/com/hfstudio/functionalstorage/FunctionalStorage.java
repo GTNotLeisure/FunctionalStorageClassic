@@ -32,7 +32,7 @@ import cpw.mods.fml.relauncher.Side;
     modid = Tags.MODID,
     version = Tags.VERSION,
     name = Tags.MODNAME,
-    dependencies = "required-after:gtnhlib@[0.11.46,);after:etfuturum;after:appliedenergistics2;after:JABBA;after:LogisticsPipes;before:thaumicenergistics",
+    dependencies = "required-after:gtnhlib@[0.11.58,);after:etfuturum;after:appliedenergistics2;after:JABBA;after:LogisticsPipes;before:thaumicenergistics",
     guiFactory = "com.hfstudio.functionalstorage.misc.ConfigGuiFactory",
     acceptedMinecraftVersions = "[1.7.10]")
 public class FunctionalStorage {
